@@ -592,7 +592,7 @@ describe("AppSidebar catalog session rows", () => {
       expect(active[0]?.getAttribute("data-session-key")).toBe(
         "catalog:codex:gateway%3Alocal:thread-1",
       );
-      expect(active[0]?.getAttribute("role")).toBe("listitem");
+      expect(active[0]?.closest('[role="listitem"]')).not.toBeNull();
       expect(active[0]?.closest('[role="list"]')?.getAttribute("aria-label")).toBe("Local Codex");
       expect(active[0]?.querySelector("a")?.getAttribute("aria-current")).toBe("page");
       expect(active[0]?.querySelector("a")?.hasAttribute("aria-describedby")).toBe(false);

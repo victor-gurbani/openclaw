@@ -154,6 +154,17 @@ export function trimmedTextContents(locator: Locator): Promise<string[]> {
   );
 }
 
+/**
+ * Coding ships collapsed on a first visit, so a fresh browser context renders a
+ * bare section header and no work rows at all. Any scenario whose fixture puts
+ * a session in a checkout has to say otherwise before the page loads.
+ */
+export function expandStoredSessionSections(page: Page): Promise<void> {
+  return page.addInitScript((key) => {
+    localStorage.setItem(key, "[]");
+  }, collapsedSessionSectionsStorageKey);
+}
+
 export function actionOpacity(button: Locator): Promise<string> {
   return button.evaluate((element) => globalThis.getComputedStyle(element).opacity);
 }

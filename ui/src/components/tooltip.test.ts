@@ -126,7 +126,10 @@ describe("openclaw-tooltip", () => {
     expect(styles).toContain("--wa-tooltip-border-color:");
     expect(styles).toContain("--wa-tooltip-border-width: 1px");
     expect(styles).toContain("--wa-tooltip-border-style: solid");
-    expect(styles).toContain("--wa-tooltip-arrow-size: 6px");
+    // Arrow, padding, and radius keep their defaults but stay caller-skinnable:
+    // a card-shaped tooltip needs a different shell from a one-line label.
+    expect(styles).toContain("--wa-tooltip-arrow-size: var(--openclaw-tooltip-arrow-size, 6px)");
+    expect(styles).toContain("padding: var(--openclaw-tooltip-padding, 7px 9px)");
   });
 
   it("projects rich content into the Web Awesome tooltip", async () => {

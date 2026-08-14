@@ -2,7 +2,7 @@
 // wrapper API; Web Awesome owns popup positioning, rendering, and dismissal.
 import "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
 import type WaTooltip from "@awesome.me/webawesome/dist/components/tooltip/tooltip.js";
-import { css, html } from "lit";
+import { css, html, type PropertyValues } from "lit";
 import { property, query } from "lit/decorators.js";
 import { OpenClawLitElement } from "../lit/openclaw-element.ts";
 
@@ -98,6 +98,27 @@ class Tooltip extends OpenClawLitElement {
   /** Let a reveal-only trigger open on click instead of dismissing. */
   @property({ type: Boolean, attribute: "open-on-click" }) openOnClick = false;
 
+  /**
+   * Cold-open delay for this trigger alone. A quick label wants the provider's
+   * default; a surface that reveals a whole card wants the reader to have asked
+   * for it. The provider's skip-delay window still overrides both, so scanning
+   * siblings stays immediate once the first one has opened.
+   */
+  @property({ type: Number }) delay?: number;
+
+  /**
+   * Set while another surface owns the pointer — an open row menu, for
+   * instance. The tooltip closes at once and refuses to reopen until it clears.
+   */
+  @property({ type: Boolean, reflect: true }) suppressed = false;
+
+  /**
+   * Where the surface opens relative to its trigger. A one-line label reads
+   * above it; a card anchored to a full-width sidebar row has to open beside
+   * the row instead of covering the rows the reader is scanning.
+   */
+  @property() placement = "top";
+
   @query("wa-tooltip") private webAwesomeTooltip?: WaTooltip;
 
   private triggerElement: HTMLElement | null = null;
@@ -124,18 +145,18 @@ class Tooltip extends OpenClawLitElement {
 
     wa-tooltip {
       --max-width: var(--openclaw-tooltip-max-width, min(260px, calc(100vw - 16px)));
-      --wa-tooltip-arrow-size: 6px;
+      --wa-tooltip-arrow-size: var(--openclaw-tooltip-arrow-size, 6px);
       --wa-tooltip-background-color: color-mix(in srgb, var(--card) 94%, black 6%);
       --wa-tooltip-border-color: color-mix(in srgb, var(--border-strong) 84%, transparent);
       --wa-tooltip-border-width: 1px;
       --wa-tooltip-border-style: solid;
       --wa-tooltip-content-color: var(--text);
-      --wa-tooltip-border-radius: var(--radius-md);
+      --wa-tooltip-border-radius: var(--openclaw-tooltip-radius, var(--radius-md));
       font-family: var(--font-body);
     }
 
     wa-tooltip::part(body) {
-      padding: 7px 9px;
+      padding: var(--openclaw-tooltip-padding, 7px 9px);
       box-shadow: var(--shadow-md);
       font-size: 12px;
       font-weight: 500;
@@ -162,7 +183,10 @@ class Tooltip extends OpenClawLitElement {
     this.style.display = "contents";
   }
 
-  protected override updated() {
+  protected override updated(changed: PropertyValues) {
+    if (changed.has("suppressed") && this.suppressed) {
+      this.close();
+    }
     this.attachTrigger();
     this.syncDescription();
     this.syncWebAwesomeTooltip();
@@ -184,7 +208,7 @@ class Tooltip extends OpenClawLitElement {
   }
 
   private get hoverDelay() {
-    return Math.max(0, this.provider?.delay ?? HOVER_DELAY);
+    return Math.max(0, this.delay ?? this.provider?.delay ?? HOVER_DELAY);
   }
 
   private get touchDelay() {
@@ -364,7 +388,12 @@ class Tooltip extends OpenClawLitElement {
   };
 
   private scheduleOpen() {
-    if (this.webAwesomeTooltip?.open || this.openTimer !== null || this.isRedundant()) {
+    if (
+      this.suppressed ||
+      this.webAwesomeTooltip?.open ||
+      this.openTimer !== null ||
+      this.isRedundant()
+    ) {
       return;
     }
     const delay = this.provider?.shouldDelayOpen() === false ? 0 : this.hoverDelay;
@@ -552,7 +581,7 @@ class Tooltip extends OpenClawLitElement {
   override render() {
     return html`
       <slot @slotchange=${() => this.attachTrigger()}></slot>
-      <wa-tooltip id=${this.tooltipId} trigger="manual">
+      <wa-tooltip id=${this.tooltipId} trigger="manual" placement=${this.placement}>
         <span class="tooltip-content">${this.content}</span>
         <span
           class="tooltip-rich-content"
