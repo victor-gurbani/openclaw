@@ -1102,7 +1102,7 @@ export class ConfigPage extends OpenClawLightDomElement {
           null,
         controlUiCommit: CONTROL_UI_BUILD_INFO.commit,
         controlUiCommitAt: CONTROL_UI_BUILD_INFO.commitAt,
-        controlUiBuiltAt: CONTROL_UI_BUILD_INFO.builtAt,
+        controlUiBuiltAt: CONTROL_UI_BUILD_INFO.builtAt ?? null,
         schedule: overlaySnapshot.updateSchedule,
         heldUpdateCampaignId: overlaySnapshot.heldUpdateCampaignId,
         updateAvailable: overlaySnapshot.updateAvailable,

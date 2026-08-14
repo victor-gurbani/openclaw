@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
 import { describe, expect, it, vi } from "vitest";
 import { controlUiLocaleModulesPlugin } from "../../config/control-ui-locales.ts";
-import {
+import controlUiViteConfig, {
   controlUiBrowserOnlySharedModuleAliases,
   createControlUiPrecompressedAssetVariants,
   resolveControlUiBuildInfo,
@@ -76,6 +76,41 @@ describe("Control UI Vite config", () => {
     });
     expect(readGitCommit).not.toHaveBeenCalled();
     expect(readGitCommitTimestamp).toHaveBeenCalledWith("0123456789abcdef0123456789abcdef01234567");
+  });
+
+  it("omits default advisory metadata from the embedded identity", async () => {
+    await childProcessMocks.execFileSync.withImplementation(
+      ((_file: string, args?: readonly string[]) => {
+        const commandArgs = args ?? [];
+        if (commandArgs.includes("--format=%ct")) {
+          return "0\n";
+        }
+        if (commandArgs.includes("--abbrev-ref")) {
+          return "HEAD\n";
+        }
+        if (commandArgs.includes("--porcelain")) {
+          return "";
+        }
+        return `${"a".repeat(40)}\n`;
+      }) as typeof import("node:child_process").execFileSync,
+      async () => {
+        const embeddedValue =
+          controlUiViteConfig().define?.["globalThis.OPENCLAW_CONTROL_UI_BUILD_INFO"];
+        if (typeof embeddedValue !== "string") {
+          throw new Error("Control UI build identity define is missing");
+        }
+        const embedded = JSON.parse(embeddedValue) as Record<string, unknown>;
+        expect(embedded).not.toHaveProperty("builtAt");
+        expect(embedded).not.toHaveProperty("dirty");
+        expect(embedded).not.toHaveProperty("release");
+        expect(embedded).toMatchObject({
+          commit: "a".repeat(40),
+          commitAt: "1970-01-01T00:00:00.000Z",
+          branch: null,
+          buildId: expect.stringContaining("aaaaaaaaaaaa"),
+        });
+      },
+    );
   });
 
   it("keeps source-build identity stable when no build timestamp is provided", () => {

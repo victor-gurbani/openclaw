@@ -63,7 +63,7 @@ const ABOUT_LINKS: ReadonlyArray<{ href: string; icon: TemplateResult; label: ()
 ];
 
 function formatControlUiBuildDate(
-  value: string | null,
+  value: string | null | undefined,
   locales?: Intl.LocalesArgument,
 ): string | null {
   if (!value) {

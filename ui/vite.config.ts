@@ -429,7 +429,12 @@ export default function controlUiViteConfig(options: { outDir?: string } = {}): 
   return {
     base,
     define: {
-      "globalThis.OPENCLAW_CONTROL_UI_BUILD_INFO": JSON.stringify(buildInfo),
+      "globalThis.OPENCLAW_CONTROL_UI_BUILD_INFO": JSON.stringify({
+        ...buildInfo,
+        builtAt: buildInfo.builtAt || undefined,
+        dirty: buildInfo.dirty || undefined,
+        release: buildInfo.release || undefined,
+      }),
     },
     publicDir: path.resolve(here, "public"),
     css: {
