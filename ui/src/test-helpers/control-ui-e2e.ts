@@ -2268,7 +2268,9 @@ function createMockGatewayControls(page: Page, defaultSessionKey: string): MockG
           return Boolean(gateway?.requests.some((request) => request.method === targetMethod));
         },
         method,
-        { timeout: 10_000 },
+        // 30s ceiling: cold Control UI boots on loaded CI runners exceed 10s;
+        // the wait resolves as soon as the request lands, so local runs stay fast.
+        { timeout: 30_000 },
       );
       const requests = await getRequests(method);
       const request = requests.at(-1);
