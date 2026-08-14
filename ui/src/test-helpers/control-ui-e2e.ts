@@ -2268,7 +2268,9 @@ function createMockGatewayControls(page: Page, defaultSessionKey: string): MockG
           return Boolean(gateway?.requests.some((request) => request.method === targetMethod));
         },
         method,
-        { timeout: 10_000 },
+        // Request capture is non-rendering state. Interval polling avoids background-page
+        // requestAnimationFrame throttling when CI runs several headless pages concurrently.
+        { polling: 25, timeout: 10_000 },
       );
       const requests = await getRequests(method);
       const request = requests.at(-1);
