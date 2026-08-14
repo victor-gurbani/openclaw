@@ -186,7 +186,10 @@ suite.define(() => {
       );
       for (const child of [staleRunningChild, failedChild]) {
         expect(await child.locator("openclaw-elapsed-time").count()).toBe(0);
-        expect((await child.locator(".session-row-trail").textContent())?.trim()).toBeTruthy();
+        // A child row's endcap carries state only: no duration, no relative time.
+        expect((await child.locator(".sidebar-recent-session__aside").textContent())?.trim()).toBe(
+          "",
+        );
       }
       await captureUiProof(page, "child-sessions-expanded.png");
       await captureUiProof(page, "child-sessions-run-state-precedence.png");
