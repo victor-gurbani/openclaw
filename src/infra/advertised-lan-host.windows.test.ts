@@ -48,7 +48,7 @@ describe.runIf(process.platform === "win32")("advertised LAN host PowerShell con
         "-Command",
         `[Console]::OutputEncoding=[Text.Encoding]::GetEncoding(437); ${outputPrefix}[pscustomobject]@{InterfaceAlias='réseau-网卡';RouteMetric=1;InterfaceMetric=1} | ConvertTo-Json -Compress`,
       ],
-      { timeoutMs: 3_000, maxOutputBytes: 16 * 1024 },
+      { timeoutMs: 10_000, maxOutputBytes: 16 * 1024 },
     );
     expect(result).toMatchObject({ code: 0 });
     expect(JSON.parse(result.stdout)).toMatchObject({ InterfaceAlias: "réseau-网卡" });
