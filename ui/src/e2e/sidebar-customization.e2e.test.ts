@@ -519,24 +519,37 @@ suite.define(() => {
         .not.toContain("Workboard");
 
       await moreMenu.getByRole("menuitem", { name: "Customize sidebar" }).click();
-      const menu = sidebar.locator(
-        "wa-dropdown.sidebar-customize-menu:not(.sidebar-more-menu):not(.sidebar-agent-menu)",
-      );
-      // The pin editor replaces the More menu in place.
+      const customizer = sidebar.locator(".sidebar-customizer");
+      // The customizer replaces the sidebar body instead of opening a second menu.
       await expect.poll(() => moreMenu.count()).toBe(0);
+      await expect.poll(() => customizer.isVisible()).toBe(true);
+      const homeRow = customizer.locator('[data-sidebar-customizer-id="fixed:home"]');
+      const pinnedRow = customizer.locator('[data-sidebar-customizer-id="pinned"]');
+      const sessionsRow = customizer.locator('[data-sidebar-customizer-id="ungrouped"]');
+      await expect.poll(() => homeRow.locator("button, .sidebar-customizer__grip").count()).toBe(0);
       await expect
-        .poll(() => trimmedTextContents(menu.getByRole("menuitemcheckbox")))
-        .not.toContain("Workboard");
-      const tasksItem = menu.getByRole("menuitemcheckbox", { name: "Tasks" });
-      await expect.poll(() => tasksItem.getAttribute("aria-checked")).toBe("false");
+        .poll(() => pinnedRow.locator("button, .sidebar-customizer__grip").count())
+        .toBe(0);
+      await expect
+        .poll(() => sessionsRow.locator(".sidebar-customizer__visibility").count())
+        .toBe(0);
+      const tasksRow = customizer.locator('[data-sidebar-customizer-id="route:tasks"]');
+      await expect.poll(() => tasksRow.getAttribute("class")).toContain("--hidden");
       // Ask OpenClaw moved to Settings (#111686): custodian is not a sidebar
       // nav route anymore, so the pin editor does not offer it.
+      await expect.poll(() => customizer.getByText("OpenClaw", { exact: true }).count()).toBe(0);
+      for (const theme of ["light", "dark"] as const) {
+        await setThemeMode(page, theme);
+        await captureSettingsSidebarProof(customizer, `02-customizer-${theme}.png`);
+      }
+      await page.emulateMedia({ reducedMotion: "reduce" });
       await expect
-        .poll(() => menu.getByRole("menuitemcheckbox", { name: "OpenClaw" }).count())
-        .toBe(0);
-      await captureUiProof(page, "02-customize-menu.png");
+        .poll(() => tasksRow.evaluate((row) => getComputedStyle(row).animationName))
+        .toBe("none");
 
-      await tasksItem.click();
+      await tasksRow.getByRole("button", { name: "Show Tasks in sidebar" }).click();
+      await expect.poll(() => tasksRow.getAttribute("class")).not.toContain("--hidden");
+      await customizer.getByRole("button", { name: "Back" }).click();
       await expect
         .poll(() => trimmedTextContents(pinnedItems))
         .toEqual(["Automations", "Plugins", "Tasks"]);
@@ -558,7 +571,11 @@ suite.define(() => {
       await captureUiProof(page, "03-persisted-customization.png");
 
       await editPersistedPinnedItems.click();
-      await menu.getByRole("menuitem", { name: "Reset pinned items" }).click();
+      await customizer
+        .locator('[data-sidebar-customizer-id="route:tasks"]')
+        .getByRole("button", { name: "Hide Tasks from sidebar" })
+        .click();
+      await customizer.getByRole("button", { name: "Back" }).click();
       await expect.poll(() => trimmedTextContents(pinnedItems)).toEqual(["Automations", "Plugins"]);
 
       // The shell chrome search button is the command palette entry point.

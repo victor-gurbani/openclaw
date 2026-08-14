@@ -548,20 +548,15 @@ suite.define(() => {
       await expect.poll(() => reasoning.getAttribute("aria-checked")).toBe("false");
 
       const sidebar = page.locator("openclaw-app-sidebar");
-      await sidebar.locator(".sidebar-nav__head-action").click();
+      await sidebar.locator(".sidebar-nav__more").click();
       await sidebar
         .locator("wa-dropdown.sidebar-more-menu")
-        .getByRole("menuitem", { name: "Edit pinned items" })
+        .getByRole("menuitem", { name: "Customize sidebar" })
         .click();
-      const customizeMenu = sidebar.locator(
-        "wa-dropdown.sidebar-customize-menu:not(.sidebar-more-menu):not(.sidebar-agent-menu)",
-      );
-      await expect
-        .poll(() => customizeMenu.locator(".sidebar-customize-menu__provenance").textContent())
-        .toContain("Stored in this browser only");
-      const tasks = customizeMenu.getByRole("menuitemcheckbox", { name: "Tasks" });
-      await tasks.click();
-      await expect.poll(() => tasks.getAttribute("aria-checked")).toBe("true");
+      const customizer = sidebar.locator(".sidebar-customizer");
+      const tasks = customizer.locator('[data-sidebar-customizer-id="route:tasks"]');
+      await tasks.getByRole("button", { name: "Show Tasks in sidebar" }).click();
+      await expect.poll(() => tasks.getAttribute("class")).not.toContain("--hidden");
       await page.waitForTimeout(100);
       expect(await gateway.getRequests("config.patch")).toHaveLength(0);
 
@@ -579,21 +574,12 @@ suite.define(() => {
         )
         .toBe("false");
 
-      await sidebar.locator(".sidebar-nav__head-action").click();
+      await sidebar.locator(".sidebar-nav__more").click();
       await sidebar
         .locator("wa-dropdown.sidebar-more-menu")
-        .getByRole("menuitem", { name: "Edit pinned items" })
+        .getByRole("menuitem", { name: "Customize sidebar" })
         .click();
-      await expect
-        .poll(() => customizeMenu.locator(".sidebar-customize-menu__provenance").textContent())
-        .toContain("Stored in this browser only");
-      await expect
-        .poll(() =>
-          customizeMenu
-            .getByRole("menuitemcheckbox", { name: "Tasks" })
-            .getAttribute("aria-checked"),
-        )
-        .toBe("true");
+      await expect.poll(() => tasks.getAttribute("class")).not.toContain("--hidden");
       expect(await gateway.getRequests("config.patch")).toHaveLength(0);
     } finally {
       await context.close();
