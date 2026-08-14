@@ -404,6 +404,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var nodeTerminationCleanup: @MainActor () async -> Void = {
         await TalkMLXSpeechSynthesizer.shared.shutdown()
         await MacNodeModeCoordinator.shared.stopAndWait()
+        // The worker owns the MCP proxy. Stop it before closing the app-owned
+        // daemon socket so an in-flight completion cannot be mistaken for retryable.
+        await CuaDriverHostCoordinator.shared.shutdown()
     }
 
     var peekabooBridgeTerminationCleanup: @MainActor () async -> Void = {
@@ -611,7 +614,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { PresenceReporter.shared.start() }
         Task { await HealthStore.shared.refresh(onDemand: true) }
         Task { await PortGuardian.shared.sweep(mode: AppStateStore.shared.connectionMode) }
-        AppStateStore.shared.applyPeekabooBridgeHostState()
+        AppStateStore.shared.applyComputerControlHostState()
         if launchPolicy.allowsAutomaticPresentation {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 if !PostUpdateController.shared.startIfNeeded() {
