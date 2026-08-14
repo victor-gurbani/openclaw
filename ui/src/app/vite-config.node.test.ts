@@ -101,12 +101,12 @@ describe("Control UI Vite config", () => {
         }
         const embedded = JSON.parse(embeddedValue) as Record<string, unknown>;
         expect(embedded).not.toHaveProperty("builtAt");
+        expect(embedded).not.toHaveProperty("branch");
         expect(embedded).not.toHaveProperty("dirty");
         expect(embedded).not.toHaveProperty("release");
         expect(embedded).toMatchObject({
           commit: "a".repeat(40),
           commitAt: "1970-01-01T00:00:00.000Z",
-          branch: null,
           buildId: expect.stringContaining("aaaaaaaaaaaa"),
         });
       },

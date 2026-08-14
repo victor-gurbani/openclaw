@@ -432,6 +432,7 @@ export default function controlUiViteConfig(options: { outDir?: string } = {}): 
       "globalThis.OPENCLAW_CONTROL_UI_BUILD_INFO": JSON.stringify({
         ...buildInfo,
         builtAt: buildInfo.builtAt || undefined,
+        branch: buildInfo.branch || undefined,
         dirty: buildInfo.dirty || undefined,
         release: buildInfo.release || undefined,
       }),

@@ -6,7 +6,7 @@ import { formatRelativeTimestamp } from "../lib/format.ts";
 
 const BRANCH_DISPLAY_LENGTH = 14;
 
-function formatBranchPrefix(branch: string | null): string {
+function formatBranchPrefix(branch: string | null | undefined): string {
   if (!branch || branch === "main") {
     return "";
   }

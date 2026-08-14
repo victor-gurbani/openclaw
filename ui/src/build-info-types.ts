@@ -3,7 +3,7 @@ export type ControlUiBuildInfo = Readonly<{
   commit: string | null;
   commitAt: string | null;
   builtAt?: string | null;
-  branch: string | null;
+  branch?: string | null;
   dirty?: boolean | null;
   release?: boolean;
   buildId: string;
