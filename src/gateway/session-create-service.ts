@@ -224,6 +224,37 @@ type CreateGatewaySessionResult =
     }
   | { ok: false; error: ErrorShape };
 
+const FORK_LABEL_MAX_COPIES = 99;
+
+/**
+ * A fork of a named session inherits that name with a numeric suffix. Two rows
+ * both reading "Release notes" are indistinguishable everywhere a session is
+ * listed, and the name is the only thing a fork does not otherwise inherit.
+ *
+ * This belongs to the producer: a renderer deriving it would have to count
+ * look-alikes at paint time, and would disagree with the stored name the moment
+ * either session were renamed. An unnamed parent stays unnamed - a generated
+ * display name is not a name to copy.
+ */
+export function forkedSessionLabel(
+  parentLabel: string | undefined,
+  isLabelInUse: (label: string) => boolean,
+): string | undefined {
+  const base = normalizeOptionalString(parentLabel)
+    ?.replace(/\s*\(\d+\)$/u, "")
+    .trim();
+  if (!base) {
+    return undefined;
+  }
+  for (let copy = 2; copy <= FORK_LABEL_MAX_COPIES; copy += 1) {
+    const candidate = `${base} (${copy})`;
+    if (!isLabelInUse(candidate)) {
+      return candidate;
+    }
+  }
+  return undefined;
+}
+
 export async function createGatewaySession(params: {
   cfg: OpenClawConfig;
   key?: string;
@@ -947,18 +978,23 @@ export async function createGatewaySession(params: {
             };
           }
         }
+        const isLabelInUse = (label: string) =>
+          Object.entries(sessionEntries).some(
+            ([sessionKey, entry]) => sessionKey !== target.canonicalKey && entry.label === label,
+          );
         const patched = await projectSessionsPatchEntry({
           cfg: params.cfg,
           existingEntry: sessionEntries[target.canonicalKey],
-          isLabelInUse: (label) =>
-            Object.entries(sessionEntries).some(
-              ([sessionKey, entry]) => sessionKey !== target.canonicalKey && entry.label === label,
-            ),
+          isLabelInUse,
           storeKey: target.canonicalKey,
           agentId: target.agentId,
           patch: {
             key: target.canonicalKey,
-            label: normalizeOptionalString(params.label),
+            label:
+              normalizeOptionalString(params.label) ??
+              (params.fork === true
+                ? forkedSessionLabel(parentSessionEntry?.label, isLabelInUse)
+                : undefined),
             model: catalogModel ?? requestedModel,
             thinkingLevel: requestedThinkingLevel,
           },

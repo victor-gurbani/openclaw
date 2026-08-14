@@ -9,6 +9,7 @@ import {
   isCronSessionKey,
   resolveChannelSessionInfo,
   resolveSessionDisplayName,
+  resolveSessionWorkContext,
   resolveSessionWorkSubtitle,
 } from "../lib/session-display.ts";
 import { isSessionRunActive } from "../lib/session-run-state.ts";
@@ -167,6 +168,7 @@ export function buildSidebarSessionNavigationState(input: {
       // a "Subagent:" prefix on named threads is noise (other surfaces keep it).
       label: resolveSessionDisplayName(row.key, row, { includeSubagentPrefix: false }),
       subtitle: resolveSessionWorkSubtitle(row),
+      workContext: resolveSessionWorkContext(row),
       href: sessionNavigationTarget({
         face: resolveSessionPreferredFace(row),
         sessionKey: row.key,

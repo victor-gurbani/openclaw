@@ -335,7 +335,6 @@ function renderCatalogHostGroup(
                     className: "sidebar-session-catalog-project__head",
                     labelClassName: "sidebar-session-catalog-project__label",
                     title: group.title,
-                    count: group.sessions.length,
                     onToggle: () => params.onToggleSection(sectionId),
                   })}
                   ${collapsed

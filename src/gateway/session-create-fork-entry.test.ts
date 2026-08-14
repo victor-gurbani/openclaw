@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { InternalSessionEntry as SessionEntry } from "../config/sessions.js";
 import { buildForkedGatewaySessionEntry } from "./session-create-fork-entry.js";
+import { forkedSessionLabel } from "./session-create-service.js";
 
 describe("buildForkedGatewaySessionEntry", () => {
   it("preserves adopted node ancestry and links the replaced generation", () => {
@@ -39,5 +40,23 @@ describe("buildForkedGatewaySessionEntry", () => {
       sessionId: "parent-generation",
     });
     expect(forked.previousSessionId).toBeUndefined();
+  });
+});
+
+describe("forkedSessionLabel", () => {
+  it("inherits the parent name with the first free copy number", () => {
+    expect(forkedSessionLabel("Release notes", () => false)).toBe("Release notes (2)");
+    expect(forkedSessionLabel("Release notes", (label) => label === "Release notes (2)")).toBe(
+      "Release notes (3)",
+    );
+  });
+
+  it("counts from the original name rather than stacking suffixes", () => {
+    expect(forkedSessionLabel("Release notes (2)", () => false)).toBe("Release notes (2)");
+  });
+
+  it("leaves an unnamed parent unnamed", () => {
+    expect(forkedSessionLabel(undefined, () => false)).toBeUndefined();
+    expect(forkedSessionLabel("   ", () => false)).toBeUndefined();
   });
 });
